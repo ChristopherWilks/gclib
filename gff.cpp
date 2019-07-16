@@ -3238,7 +3238,8 @@ bool singleExonTMatch(GffObj& m, GffObj& r, int& ovlen) {
 }
 
 //formerly in gffcompare
-char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch) {
+//CWILKS 7/2019: MET_fuzz is to allow for fuzz length on coordinate matches for multi-exon transcripts (single exon transcripts are left alone)
+char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz) {
 	ovlen=0; //total actual exonic overlap
 	if (!m.overlap(r.start,r.end)) return 0;
 	int jmax=r.exons.Count()-1;
@@ -3369,8 +3370,9 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch) {
 		} //no intron overlap, skipping qry intron
 		intron_ovl=true;
 		//overlapping introns, test junction matching
-		bool smatch=(mstart==rstart);
-		bool ematch=(mend==rend);
+        //CWILKS 2019/7 MET_fuzz kicks in from here on
+		bool smatch=(mstart==rstart || abs(mstart-rstart) <= MET_fuzz);
+		bool ematch=(mend==rend || abs(mend-rend) <= MET_fuzz);
 		if (smatch || ematch) junct_match=true;
 		if (smatch && ematch) {
 			//perfect match for this intron
