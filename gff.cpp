@@ -3241,30 +3241,33 @@ bool singleExonTMatch(GffObj& m, GffObj& r, int& ovlen) {
 //CWILKS 7/2019: MET_fuzz is to allow for fuzz length on coordinate matches for multi-exon transcripts (single exon transcripts are left alone)
 char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz) {
 	ovlen=0; //total actual exonic overlap
-	if (!m.overlap(r.start,r.end)) return 0;
+    //CWILKS 7/2019: allow for fuzz to be applied to the ends
+    uint s = (((int64_t) r.start)-MET_fuzz) < 0?0:r.start-MET_fuzz;
+	if (!m.overlap(s,r.end+MET_fuzz)) return 0;
 	int jmax=r.exons.Count()-1;
 	//int iovlen=0; //total m.exons overlap with ref introns
 	char rcode=0;
+    //CWILKS 7/2019: force a single non-official code "1" for single-exon transfrags
 	if (m.exons.Count()==1) { //single-exon transfrag
 		GSeg mseg(m.start, m.end);
 		if (jmax==0) { //also single-exon ref
 			//ovlen=mseg.overlapLen(r.start,r.end);
 			if (singleExonTMatch(m, r, ovlen)) {
 				if (strictMatch) return (r.exons[0]->start==m.exons[0]->start &&
-						r.exons[0]->end==m.exons[0]->end) ? '=' : '~';
-				else return '=';
+						r.exons[0]->end==m.exons[0]->end) ? '1' : '1';
+				else return '1';
 			}
 			if (m.covlen<r.covlen)
-			   { if (ovlen >= m.covlen*0.8) return 'c'; } // fuzzy containment
+			   { if (ovlen >= m.covlen*0.8) return '1'; } // fuzzy containment
 			else
-				if (ovlen >= r.covlen*0.8 ) return 'k';   // fuzzy reverse containment
-			return 'o'; //just plain overlapping
+				if (ovlen >= r.covlen*0.8 ) return '1';   // fuzzy reverse containment
+			return '1'; //just plain overlapping
 		}
 		//-- single-exon qry overlaping multi-exon ref
 		//check full pre-mRNA case (all introns retained): code 'm'
 
 		if (m.start<=r.exons[0]->end && m.end>=r.exons[jmax]->start)
-			return 'm';
+			return '1';
 
 		for (int j=0;j<=jmax;j++) {
 			//check if it's ~contained by an exon
@@ -3272,24 +3275,24 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 			if (exovlen>0) {
 				ovlen+=exovlen;
 				if (m.start>r.exons[j]->start-4 && m.end<r.exons[j]->end+4) {
-					return 'c'; //close enough to be considered contained in this exon
+					return '1'; //close enough to be considered contained in this exon
 				}
 			}
 			if (j==jmax) break; //last exon here, no intron to check
 			//check if it fully covers an intron (retained intron)
 			if (m.start<r.exons[j]->end && m.end>r.exons[j+1]->start)
-				return 'n';
+				return '1';
 			//check if it's fully contained by an intron
 			if (m.end<r.exons[j+1]->start && m.start>r.exons[j]->end)
-				return 'i';
+				return '1';
 			// check if it's a potential pre-mRNA transcript
 			// (if overlaps this intron at least 10 bases)
 			uint introvl=mseg.overlapLen(r.exons[j]->end+1, r.exons[j+1]->start-1);
 			//iovlen+=introvl;
-			if (introvl>=10 && mseg.len()>introvl+10) { rcode='e'; }
+			if (introvl>=10 && mseg.len()>introvl+10) { rcode='1'; }
 		} //for each ref exon
 		if (rcode>0) return rcode;
-		return 'o'; //plain overlap, uncategorized
+		return '1'; //plain overlap, uncategorized
 	} //single-exon transfrag
 	//-- multi-exon transfrag --
 	int imax=m.exons.Count()-1;// imax>0 here
