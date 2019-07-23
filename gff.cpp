@@ -3240,6 +3240,7 @@ bool singleExonTMatch(GffObj& m, GffObj& r, int& ovlen) {
 //formerly in gffcompare
 //CWILKS 7/2019: MET_fuzz is to allow for fuzz length on coordinate matches for multi-exon transcripts (single exon transcripts are left alone)
 char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz) {
+    //strictMatch=true;
 	ovlen=0; //total actual exonic overlap
     //CWILKS 7/2019: allow for fuzz to be applied to the ends
     uint s = (((int64_t) r.start)-MET_fuzz) < 0?0:r.start-MET_fuzz;
@@ -3248,7 +3249,11 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 	//int iovlen=0; //total m.exons overlap with ref introns
 	char rcode=0;
     //CWILKS 7/2019: force a single non-official code "1" for single-exon transfrags
-	if (m.exons.Count()==1) { //single-exon transfrag
+	if (m.exons.Count() == 1)  //single-exon transfrag/reference
+		return '1';
+	if (r.exons.Count() == 1)
+		return '2'; 
+	/*if (m.exons.Count()==1 || r.exons.Count() == 1) { //single-exon transfrag
 		GSeg mseg(m.start, m.end);
 		if (jmax==0) { //also single-exon ref
 			//ovlen=mseg.overlapLen(r.start,r.end);
@@ -3293,10 +3298,10 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 		} //for each ref exon
 		if (rcode>0) return rcode;
 		return '1'; //plain overlap, uncategorized
-	} //single-exon transfrag
+	} //single-exon transfrag*/
 	//-- multi-exon transfrag --
 	int imax=m.exons.Count()-1;// imax>0 here
-	if (jmax==0) { //single-exon reference overlap
+	/*if (jmax==0) { //single-exon reference overlap
 		//any exon overlap?
 		GSeg rseg(r.start, r.end);
 		for (int i=0;i<=imax;i++) {
@@ -3313,7 +3318,7 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 				return 'y'; //ref contained in this transfrag intron
 		}
 		return 'o';
-	}
+	}*/
 	// * check if transfrag contained by a ref intron
 	for (int j=0;j<jmax;j++) {
 		if (m.end<r.exons[j+1]->start && m.start>r.exons[j]->end)
