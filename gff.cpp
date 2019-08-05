@@ -3402,20 +3402,20 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 			// -- qry intron chain is shorter than ref intron chain --
 			int l_iovh=0;   // overhang of leftmost q exon left boundary beyond the end of ref intron to the left
 			int r_iovh=0;   // same type of overhang through the ref intron on the right
-			if (jmfirst>1 && r.exons[jmfirst-1]->start>m.start)
+			if (jmfirst > 1 && r.exons[jmfirst-1]->start > m.start)
 				l_iovh = r.exons[jmfirst-1]->start - m.start;
-			if (jmlast<jmax && m.end > r.exons[jmlast]->end)
+			if (jmlast < jmax && m.end > r.exons[jmlast]->end)
 				r_iovh = m.end - r.exons[jmlast]->end;
-			if (l_iovh<4 && r_iovh<4) return 'c';
+			if (l_iovh < 4 && r_iovh < 4) return 'c';
 		} else if ((jmfirst==1 && jmlast==jmax)) {//ref full intron chain match
 			//check if the reference i-chain is contained in qry i-chain
 			int l_jovh=0;   // overhang of leftmost q exon left boundary beyond the end of ref intron to the left
 			int r_jovh=0;   // same type of overhang through the ref intron on the right
-			if (imfirst>1 && m.exons[imfirst-1]->start>r.start)
+			if (imfirst > 1 && m.exons[imfirst-1]->start > r.start)
 				l_jovh = m.exons[imfirst-1]->start - r.start;
-			if (imlast<imax && r.end > m.exons[imlast]->end)
+			if (imlast < imax && r.end > m.exons[imlast]->end)
 				r_jovh = r.end - m.exons[imlast]->end;
-			if (l_jovh<4 && r_jovh<4) return 'k'; //reverse containment
+			if (l_jovh < 4 && r_jovh < 4) return 'k'; //reverse containment
 		}
 	}
 	//'=', 'c' and 'k' were checked and assigned, check for 'm' and 'n' before falling back to 'j'
@@ -3427,6 +3427,6 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 	//we could have 'o' or 'y' here
 	//any real exon overlaps?
 	ovlen=m.exonOverlapLen(r);
-	if (ovlen>4) return 'o';
+	if (ovlen > 4) return 'o';
 	return 'y'; //all reference exons are within transfrag introns!
 }
