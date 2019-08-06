@@ -3304,7 +3304,7 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 			if (exovlen>0) {
 				ovlen+=exovlen;
 				if (r.start>m.exons[i]->start-4 && r.end<m.exons[i]->end+4) {
-					return 'k'; //reference contained in this assembled exon
+					return '1'; //reference contained in this assembled exon
 				}
 			}
 			if (i==imax) break;
@@ -3356,7 +3356,9 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 				intron_conflict=true;
 			if (!intron_retention && rstart>=m.exons[i-1]->start)
 				intron_retention=true;
-			if (intron_ovl) ichain_match=false;
+            //CWILKS 2019/8/6 added additional requirements
+			//if (intron_ovl && (intron_conflict || intron_retention || i != 1)) ichain_match=false;
+			if (intron_conflict || intron_retention || i != 1) ichain_match=false;
 			j++;
 			continue;
 		} //no intron overlap, skipping ref intron
@@ -3366,7 +3368,8 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 				intron_conflict=true;
 			if (!intron_retention && rend<=m.exons[i]->end)
 				intron_retention=true;
-			if (intron_ovl) ichain_match=false;
+            //CWILKS 2019/8/6 added additional requirements
+			if (intron_conflict || intron_retention || i != imax) ichain_match=false;
 			i++;
 			continue;
 		} //no intron overlap, skipping qry intron
@@ -3378,7 +3381,8 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 		if (smatch || ematch) junct_match=true;
         //CWILKS 2019/8 allow for the possibility of contained transfrags with non-matching end exon coordinates
         //NOTE: this allows any length of end exon which could potentially mean retained intron
-        if(MET_fuzz > 0) {
+        //UPDATE: this is wrong, it assumes exon start/ends but these are still intron coordinates
+        /*if(MET_fuzz > 0) {
             if(!smatch) {
                 bool r_start_nonmatch = (j == 1 && ematch); 
                 bool m_start_nonmatch = (i == 1 && ematch);
@@ -3389,7 +3393,7 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
                 bool m_end_nonmatch = (i == imax && smatch);
                 ematch = r_end_nonmatch || m_end_nonmatch;
             }
-        }
+        }*/
             
 		if (smatch && ematch) {
 			//perfect match for this intron
@@ -3402,12 +3406,12 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 			i++; j++;
 			continue;
 		}
-        //CWILKS 2019/8 wait to call either an intron_conflict or a ichain_match failure
-		if(MET_fuzz == 0 || (!smatch && !ematch && i != 1 && i != imax && j != 1 && j != jmax)) {
+        //CWILKS 2019/8 call an intron_conflict if 1) we're not allowing fuzz or 2) both ends are mismatches 3) one end is a mismatch & we're a middle exon
+        //UPDATE: I think this is wrong as well, since we're only doing intron matching and we know the introns overlap
+		//if(MET_fuzz == 0 || (!smatch && !ematch) || (i != 1 && i != imax && j != 1 && j != jmax)) {
 		    //intron overlapping but with at least a junction mismatch
 		    intron_conflict=true;
 		    ichain_match=false;
-        }
 		if (mend>rend) j++; else i++;
 	} //while checking intron overlaps
 	if (ichain_match) { //intron sub-chain match
