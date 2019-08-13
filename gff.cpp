@@ -3358,7 +3358,8 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 				intron_retention=true;
             //CWILKS 2019/8/6 added additional requirements
 			//if (intron_ovl && (intron_conflict || intron_retention || i != 1)) ichain_match=false;
-			if (intron_conflict || intron_retention || i != 1) ichain_match=false;
+			//if (intron_conflict || intron_retention || intron_ovl) ichain_match=false;
+			if (intron_ovl) ichain_match=false;
 			j++;
 			continue;
 		} //no intron overlap, skipping ref intron
@@ -3369,7 +3370,8 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 			if (!intron_retention && rend<=m.exons[i]->end)
 				intron_retention=true;
             //CWILKS 2019/8/6 added additional requirements
-			if (intron_conflict || intron_retention || i != imax) ichain_match=false;
+			//if (intron_conflict || intron_retention || intron_ovl) ichain_match=false;
+			if (intron_ovl) ichain_match=false;
 			i++;
 			continue;
 		} //no intron overlap, skipping qry intron
@@ -3414,7 +3416,7 @@ char getOvlCode(GffObj& m, GffObj& r, int& ovlen, bool strictMatch, int MET_fuzz
 		    ichain_match=false;
 		if (mend>rend) j++; else i++;
 	} //while checking intron overlaps
-	if (ichain_match) { //intron sub-chain match
+	if (ichain_match && !intron_retention && !intron_conflict) { //intron sub-chain match
 		if (imfirst==1 && imlast==imax) { // qry full intron chain match
 			if (jmfirst==1 && jmlast==jmax) {//identical intron chains
 				if (strictMatch) return (r.exons[0]->start==m.exons[0]->start &&
